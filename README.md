@@ -71,6 +71,42 @@ cd frontend && npm test -- --watchAll=false
 cd backend && ./mvnw test          # uses in-memory H2, no PostgreSQL needed
 ```
 
+## ☁️ Deploy (Vercel + Render)
+
+Vercel hosts static sites, so it serves the **React frontend**. The **Spring Boot API and PostgreSQL** run on
+[Render](https://render.com) (free tier) from the `render.yaml` blueprint in the project root. Both pieces are
+configured by environment variables only, nothing in the code changes between local and production.
+
+| Piece | Where | Config |
+|---|---|---|
+| Frontend | Vercel project `queuemasters` → https://queuemasters-alpha.vercel.app | `frontend/vercel.json`, env `REACT_APP_API_URL` |
+| API | Render web service `queuemasters-api` (Docker, `backend/Dockerfile`) | `render.yaml`, env `DB_*`, `CORS_ALLOWED_ORIGINS`, `PORT` |
+| Database | Render PostgreSQL `queuemasters-db` | wired automatically by `render.yaml` |
+
+### 1. Backend + database on Render
+1. Push this repository to GitHub (Render builds from the repo).
+2. In Render: **New → Blueprint**, choose the repo. Render reads `render.yaml` and creates the API service and the database.
+3. When the first deploy finishes, copy the service URL, e.g. `https://queuemasters-api.onrender.com`, and check `https://queuemasters-api.onrender.com/api/health` returns `{"status":"ok"}`.
+4. First login on the empty database: **`admin` / `admin@123`** (created by `DataSeeder`). Change it under **Staff**.
+   To carry over local data, run `backend/db/migrate-from-h2.sql` against the Render database (connection details are on the database page in Render).
+
+Notes: the free web service sleeps after 15 minutes without traffic, so the first request after that takes ~30 s (the frontend waits for it).
+Render's free PostgreSQL is deleted 30 days after creation unless upgraded; a free [Neon](https://neon.tech) database works too: delete the `databases:` block and `DB_HOST/PORT/NAME` lines in `render.yaml` and set `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` on the service instead.
+
+### 2. Frontend on Vercel
+```bash
+cd frontend
+npx vercel link --yes --project queuemasters                   # once per machine
+npx vercel env add REACT_APP_API_URL production                 # paste: https://queuemasters-api.onrender.com/api
+npx vercel deploy --prod --yes
+```
+`REACT_APP_API_URL` is baked in at build time, so redeploy after changing it. `vercel.json` routes every path to
+`index.html` (React Router) and caches `/static/*` for a year. To deploy on every push instead, run `npx vercel git connect`.
+
+### 3. Allow the frontend to call the API
+`CORS_ALLOWED_ORIGINS` on the Render service lists the browser origins the API accepts (comma-separated, `*` wildcards allowed).
+`render.yaml` already contains `https://queuemasters-alpha.vercel.app` and this project's preview URLs; add a custom domain there if you attach one.
+
 ## 🗺️ Pages
 | Route | Who | What |
 |---|---|---|

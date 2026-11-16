@@ -1,18 +1,23 @@
 import axios from 'axios';
 
-// One place to change the backend address (or set REACT_APP_API_URL in .env).
-// In development, `npm start` proxies /api to http://localhost:8080 (see "proxy" in package.json),
-// so there are no CORS problems and it also works when opened from another device on the network.
-export const API_URL = process.env.REACT_APP_API_URL
+// One place to change the backend address.
+// - Development: `npm start` proxies /api to http://localhost:8080 (see "proxy" in package.json),
+//   so there are no CORS problems and it also works when opened from another device on the network.
+// - Production (Vercel): set REACT_APP_API_URL to the deployed backend, e.g.
+//   https://queuemasters-api.onrender.com/api  (the value is baked in at build time).
+export const API_URL = (process.env.REACT_APP_API_URL || '').replace(/\/+$/, '')
     || (process.env.NODE_ENV === 'development' ? '/api' : 'http://localhost:8080/api');
 
-const api = axios.create({ baseURL: API_URL, timeout: 8000 });
+// Free hosting tiers put an idle backend to sleep; the first request after that can take ~30 s.
+const api = axios.create({ baseURL: API_URL, timeout: process.env.NODE_ENV === 'development' ? 8000 : 40000 });
 
 /** Turn any axios error into a short human sentence. */
 export const errorMessage = (err, fallback = 'Something went wrong.') => {
     if (!err) return fallback;
     if (err.code === 'ERR_NETWORK' || err.code === 'ECONNABORTED' || !err.response) {
-        return 'Cannot reach the server. Is the backend running on port 8080?';
+        return process.env.NODE_ENV === 'development'
+            ? 'Cannot reach the server. Is the backend running on port 8080?'
+            : 'Cannot reach the server right now. Please try again in a moment.';
     }
     const data = err.response.data;
     if (typeof data === 'string' && data.trim()) return data;

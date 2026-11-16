@@ -83,15 +83,29 @@ configured by environment variables only, nothing in the code changes between lo
 | API | Render web service `queuemasters-api` (Docker, `backend/Dockerfile`) | `render.yaml`, env `DB_*`, `CORS_ALLOWED_ORIGINS`, `PORT` |
 | Database | Render PostgreSQL `queuemasters-db` | wired automatically by `render.yaml` |
 
-### 1. Backend + database on Render
+### 1. Backend + database on Render (no card needed)
+Render's **Blueprint** feature (`render.yaml`) asks for a payment method, so create the two free resources by hand instead:
 1. Push this repository to GitHub (Render builds from the repo).
-2. In Render: **New → Blueprint**, choose the repo. Render reads `render.yaml` and creates the API service and the database.
-3. When the first deploy finishes, copy the service URL, e.g. `https://queuemasters-api.onrender.com`, and check `https://queuemasters-api.onrender.com/api/health` returns `{"status":"ok"}`.
-4. First login on the empty database: **`admin` / `admin@123`** (created by `DataSeeder`). Change it under **Staff**.
-   To carry over local data, run `backend/db/migrate-from-h2.sql` against the Render database (connection details are on the database page in Render).
+2. **Database:** Render dashboard → **New → Postgres** → name `queuemasters-db`, Instance type **Free** → Create.
+   On its page copy the **Internal Database URL** (`postgresql://user:password@host/db`).
+3. **API:** **New → Web Service** → pick the `QueueMasters-system` repo → Language **Docker**, Root Directory **`backend`**,
+   Instance type **Free**. Under *Environment variables* add:
+   | Key | Value |
+   |---|---|
+   | `DATABASE_URL` | the Internal Database URL from step 2 |
+   | `CORS_ALLOWED_ORIGINS` | `https://queuemasters-alpha.vercel.app` (your Vercel URL) |
+
+   Optional: Health Check Path `/api/health`. Click **Deploy Web Service**.
+4. When the build is live, copy the service URL, e.g. `https://queuemasters-api.onrender.com`, and check `https://queuemasters-api.onrender.com/api/health` returns `{"status":"ok"}`.
+5. First login on the empty database: **`admin` / `admin@123`** (created by `DataSeeder`). Change it under **Staff**.
+   To carry over local data, run `backend/db/migrate-from-h2.sql` against the Render database (use the External Database URL with `psql`).
+
+The backend accepts either one `DATABASE_URL` (`postgres://...`, as Render, Railway, Neon, Supabase and Heroku provide it) or the
+separate `DB_URL` / `DB_HOST` / `DB_PORT` / `DB_NAME` / `DB_USERNAME` / `DB_PASSWORD` variables.
 
 Notes: the free web service sleeps after 15 minutes without traffic, so the first request after that takes ~30 s (the frontend waits for it).
-Render's free PostgreSQL is deleted 30 days after creation unless upgraded; a free [Neon](https://neon.tech) database works too: delete the `databases:` block and `DB_HOST/PORT/NAME` lines in `render.yaml` and set `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` on the service instead.
+Render's free PostgreSQL is deleted 30 days after creation unless upgraded; a free [Neon](https://neon.tech) database never expires and
+works the same way: paste its connection string as `DATABASE_URL`. If you do have a card on file, **New → Blueprint** with `render.yaml` sets all of this up automatically.
 
 ### 2. Frontend on Vercel
 ```bash

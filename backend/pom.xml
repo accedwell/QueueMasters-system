@@ -32,6 +32,12 @@
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
+        <!-- scrypt password hashing (same format as the Node.js API in frontend/server) -->
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk18on</artifactId>
+            <version>1.79</version>
+        </dependency>
         <!-- In-memory database for the unit tests only, so they run without a PostgreSQL server -->
         <dependency>
             <groupId>com.h2database</groupId>

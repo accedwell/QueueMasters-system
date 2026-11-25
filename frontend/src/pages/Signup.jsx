@@ -18,8 +18,8 @@ const Signup = () => {
 
     const submit = async (e) => {
         e.preventDefault();
-        if (form.password.length < 6) {
-            toast('Use at least 6 characters.', 'error', 'Password too short');
+        if (form.password.length < 8) {
+            toast('Use at least 8 characters.', 'error', 'Password too short');
             return;
         }
         setBusy(true);
@@ -48,7 +48,7 @@ const Signup = () => {
                 </label>
                 <label className="field">
                     <span>Password</span>
-                    <input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="At least 6 characters" required autoComplete="new-password" />
+                    <input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="At least 8 characters" required autoComplete="new-password" />
                 </label>
 
                 <fieldset className="role-picker">

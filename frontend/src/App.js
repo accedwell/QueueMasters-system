@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import './App.css';
+import api from './api';
 
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -52,6 +53,7 @@ function Shell() {
         setUser({ role: u.role, username: u.username });
     };
     const logout = () => {
+        api.post('/auth/logout').catch(() => {});
         localStorage.removeItem('userRole');
         localStorage.removeItem('username');
         setUser(null);
@@ -59,6 +61,18 @@ function Shell() {
 
     // Keep tabs in sync if someone logs out in another tab.
     useEffect(() => {
+        // Validate cached roles against the server's HttpOnly session cookie.
+        api.get('/auth/me').then(({ data }) => {
+            localStorage.setItem('userRole', data.role);
+            localStorage.setItem('username', data.username);
+            setUser(data);
+        }).catch((err) => {
+            if (err.response?.status === 401) {
+                localStorage.removeItem('userRole');
+                localStorage.removeItem('username');
+                setUser(null);
+            }
+        });
         const sync = () => setUser(readUser());
         window.addEventListener('storage', sync);
         return () => window.removeEventListener('storage', sync);

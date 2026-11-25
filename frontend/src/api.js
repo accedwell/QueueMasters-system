@@ -3,10 +3,10 @@ import axios from 'axios';
 // One place to change the backend address.
 // - Development: `npm start` proxies /api to http://localhost:8080 (see "proxy" in package.json),
 //   so there are no CORS problems and it also works when opened from another device on the network.
-// - Production (Vercel): set REACT_APP_API_URL to the deployed backend, e.g.
-//   https://queuemasters-api.onrender.com/api  (the value is baked in at build time).
+// - Production: /api uses the Node.js functions deployed with the frontend on Vercel.
+//   REACT_APP_API_URL can optionally point to a separately hosted Java backend.
 export const API_URL = (process.env.REACT_APP_API_URL || '').replace(/\/+$/, '')
-    || (process.env.NODE_ENV === 'development' ? '/api' : 'http://localhost:8080/api');
+    || '/api';
 
 // Free hosting tiers put an idle backend to sleep; the first request after that can take ~30 s.
 const api = axios.create({ baseURL: API_URL, timeout: process.env.NODE_ENV === 'development' ? 8000 : 40000 });

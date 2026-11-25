@@ -54,7 +54,9 @@ Requires **Java 17+** and the PostgreSQL database from step 0.
 cd backend
 ./mvnw spring-boot:run        # Windows: mvnw.cmd spring-boot:run
 ```
-On a brand-new database a founder account is created automatically: **`admin` / `admin@123`**. Change it under **Staff** after the first login. Convention for this system: managers use `admin@123`, washers use `staff@123`.
+On a brand-new database a founder account is created automatically: username **`admin`**, password from the `INITIAL_ADMIN_PASSWORD` environment variable (or `admin@123` if you don't set it). Change it under **Staff** right after the first login.
+
+**Security model.** Customers never log in: they book (`/book`) and watch the queue (`/tracker`), and the public queue never shows phone numbers. Staff sign in and get an HttpOnly session cookie; the backend checks it on every staff endpoint, and staff management, registration and clearing the archive are manager-only. Passwords are stored as scrypt hashes (any old plain-text ones are hashed automatically on startup), must be at least 8 characters, and the old shared defaults `admin@123` / `staff@123` can no longer be set. Changing someone's password or role signs them out everywhere. Repeated wrong passwords are blocked for 15 minutes. Give every staff member their own password.
 
 #### 2. Start the frontend (React, port 3000)
 Requires **Node 18+**.
@@ -97,7 +99,7 @@ Render's **Blueprint** feature (`render.yaml`) asks for a payment method, so cre
 
    Optional: Health Check Path `/api/health`. Click **Deploy Web Service**.
 4. When the build is live, copy the service URL, e.g. `https://queuemasters-api.onrender.com`, and check `https://queuemasters-api.onrender.com/api/health` returns `{"status":"ok"}`.
-5. First login on the empty database: **`admin` / `admin@123`** (created by `DataSeeder`). Change it under **Staff**.
+5. Before the first start, set `INITIAL_ADMIN_PASSWORD` on the service so the founder account `admin` never has a public default password. Sign in and give each staff member their own password under **Staff**.
    To carry over local data, run `backend/db/migrate-from-h2.sql` against the Render database (use the External Database URL with `psql`).
 
 The backend accepts either one `DATABASE_URL` (`postgres://...`, as Render, Railway, Neon, Supabase and Heroku provide it) or the

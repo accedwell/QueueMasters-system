@@ -69,7 +69,7 @@ const Login = ({ onLogin }) => {
                     <button type="submit" className="btn btn-primary btn-lg btn-block" disabled={busy}>
                         {busy ? <span className="spinner" /> : 'Secure login'}
                     </button>
-                    <p className="hint">First time running the system? Sign in with <code>admin</code> / <code>admin@123</code>, then change it under Staff.</p>
+                    <p className="hint">Staff only. Ask your manager if you do not have sign-in details. Customers can book and track a wash without an account.</p>
                 </form>
             </div>
         </div>

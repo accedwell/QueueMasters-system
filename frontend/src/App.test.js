@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import App from './App';
+import api from './api';
 
 jest.mock('./api', () => ({
   __esModule: true,
@@ -7,6 +8,14 @@ jest.mock('./api', () => ({
   errorMessage: () => 'error',
   API_URL: 'http://localhost:8080/api',
 }));
+
+beforeEach(() => {
+  localStorage.clear();
+  window.scrollTo = jest.fn();
+  api.get.mockImplementation((path) => path === '/auth/me'
+    ? Promise.reject({ response: { status: 401 } })
+    : Promise.resolve({ data: [] }));
+});
 
 test('renders the landing page hero and services', async () => {
   render(<App />);
